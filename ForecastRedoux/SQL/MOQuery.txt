@@ -1,0 +1,55 @@
+select
+        temp.wonum as "ORDER",
+        /*case
+		when moitem.typeid = 20
+		then moitem.id
+		else (moitem.id - 1)
+	end as "ITEM",*/
+	mo.num as "ITEM",
+        bomitemtype.name as "ORDERTYPE",
+        part.num as "PART",
+        case
+		when moitem.typeid = 20
+		then (-1 * (moitem.qtytofulfill - moitem.qtyfulfilled))
+		when moitem.typeid = 30
+		then 0
+		else (moitem.qtytofulfill - moitem.qtyfulfilled)
+	end as "QTYREMAINING",
+        temp.moitemdate as "DATESCHEDULED",
+        temp.wonum as "PARENT",
+	moitem.moid as "MOID"
+from
+        moitem
+        left join mo on moitem.moid = mo.id
+        left join bomitemtype on bomitemtype.id = moitem.typeid
+        left join moitemstatus on moitem.statusid = moitemstatus.id
+        left join part on moitem.partid = part.id
+        left join (select
+			wo.num as "WONUM",
+                        moitem.id as "MOITEMID",
+                        moitem.typeid as "TYPEID",
+                        moitem.datescheduled as "MOITEMDATE"
+                from
+                        moitem
+                        left join mo on moitem.moid = mo.id
+			left join wo on wo.moitemid = moitem.id
+                where
+                        mo.statusid in(10,20,30,40,50)
+                        and moitem.statusid in(10,20,30,40)
+			and wo.statusid in(10,20,30)
+                        and moitem.typeid in(30,50)) as "TEMP" on temp.moitemid = moitem.parentid
+where
+        mo.statusid in(20,30,40,50)
+	and PART.TYPEID = 10
+        and moitem.statusid in(10,20,30,40)
+	and moitem.typeid not in(31,40,50)
+	and moitem.id in(select
+				woitem.moitemid
+			from
+				woitem
+				left join moitem on moitem.id = woitem.moitemid
+				left join mo on moitem.moid = mo.id
+				left join wo on wo.moitemid = moitem.id
+			where
+				mo.statusid in(10,20,30,40,50)
+				and moitem.statusid in(10,20,30,40))
