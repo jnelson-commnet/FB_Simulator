@@ -90,3 +90,4 @@ ENV/
 
 # Excel files
 .xlsx
+*.xlsx
