@@ -30,3 +30,6 @@ def run_queries():
     connecttest.save_workbook(myexcel, '/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/RawData', 'Descs.xlsx')
     return 'Queries Successful'
 
+x=1
+y=2
+test = x+y
