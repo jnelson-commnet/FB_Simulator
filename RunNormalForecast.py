@@ -1,9 +1,9 @@
 __author__ = 'Chris'
 
-import sys
+import sys #Module to access the computer
 
-sys.path.insert(0, '/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux')
+sys.path.insert(0, 'Z:\Python projects\Chris Forecast\Forecast\ForecastRedoux') #Pull up the file with the forecast information
 
-import ForecastMain
+import ForecastMain #Import the actual forecast python file
 
-ForecastMain.run_normal_forecast()
+ForecastMain.run_normal_forecast() #Run the actual forecast

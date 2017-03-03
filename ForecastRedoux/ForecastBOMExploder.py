@@ -35,7 +35,7 @@ def order_exploder(bomsdf, fgdf, ordernum, missingbomlist, manybomlist):
         ordertype = 'Raw Good'
         part = row['PART']
         qty = row['NEWQTY']
-        date = pd.to_datetime(fgdf['DATESCHEDULED']) - dt.timedelta(days=1)
+        date = pd.to_datetime(fgdf['DATESCHEDULED']) - dt.timedelta(days=1) #This is a lead time
         parent = fgdf['ORDER']
         mb = row['Make/Buy']
         templist = [ordernum,item,ordertype,part,qty,date,parent,mb]
@@ -44,7 +44,7 @@ def order_exploder(bomsdf, fgdf, ordernum, missingbomlist, manybomlist):
             tempdic[column_headers[i]] = [templist[i]]
         tempdf = pd.DataFrame.from_dict(tempdic)
         bomdf = bomdf.append(tempdf)
-    return bomdf
+    return bomdf.copy()
 
 def order_exploder_new_order(bomsdf, fgdf, missingbomlist, manybomlist):
     column_headers = ['ORDER', 'ITEM', 'ORDERTYPE', 'PART', 'QTYREMAINING', 'DATESCHEDULED', 'PARENT', 'Make/Buy']
