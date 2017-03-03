@@ -8,15 +8,21 @@ import ForecastSettings as fs
 import xlsxwriter
 import datetime as dt
 
+homey = os.getcwd()
+redouxPath = os.path.join(homey, 'ForecastRedoux')
+rawDataPath = os.path.join(redouxPath, 'RawData')
+print('forcMain path')
+print(rawDataPath)
+
 """Pull the orders data"""
 def gather_orders():
-    mopath = os.path.join('Z:\Python projects\Chris Forecast\Forecast\ForecastRedoux\RawData', 'MOs.xlsx')
+    mopath = os.path.join(rawDataPath, 'MOs.xlsx')
     modf = pd.read_excel(mopath, header=0) #Opens and puts the data into a dataframe
     orgdf = ftlb.create_mo_parents(modf)
-    popath = os.path.join('Z:\Python projects\Chris Forecast\Forecast\ForecastRedoux\RawData', 'POs.xlsx')
+    popath = os.path.join(rawDataPath, 'POs.xlsx')
     tempdf = pd.read_excel(popath, header=0) #Opens and puts the data into a dataframe
     orgdf = orgdf.append(tempdf.copy()) #Append all the data into one dataframe
-    sopath = os.path.join('Z:\Python projects\Chris Forecast\Forecast\ForecastRedoux\RawData', 'SOs.xlsx')
+    sopath = os.path.join(rawDataPath, 'SOs.xlsx')
     tempdf = pd.read_excel(sopath, header=0) #Opens and puts the data into a dataframe
     orgdf = orgdf.append(tempdf.copy()) #Append all the data into one dataframe
     orgdf = orgdf.sort_values(by=['PART', 'DATESCHEDULED'], ascending=[True, False]) #Sort the data by part then date
@@ -24,21 +30,21 @@ def gather_orders():
 
 """Pull the parts data"""
 def gather_parts():
-    partspath = os.path.join('Z:\Python projects\Chris Forecast\Forecast\ForecastRedoux\RawData', 'Parts.xlsx')
+    partspath = os.path.join(rawDataPath, 'Parts.xlsx')
     partsdf = pd.read_excel(partspath) #Opens and puts the data into a dataframe
     partsdf = partsdf.sort_values(by='PART', ascending=True) #Sort the data by part
     return partsdf
 
 """Pull the inventory data"""
 def gather_inventory():
-    invpath = os.path.join('Z:\Python projects\Chris Forecast\Forecast\ForecastRedoux\RawData', 'INVs.xlsx')
+    invpath = os.path.join(rawDataPath, 'INVs.xlsx')
     orgdf = pd.read_excel(invpath, header=0) #Opens and puts the data into a dataframe
     orgdf = orgdf.sort_values(by='PART', ascending=True) #Sort the data by part
     return orgdf
 
 """Pull the BOM data"""
 def gather_boms():
-    bompath = os.path.join('Z:\Python projects\Chris Forecast\Forecast\ForecastRedoux\RawData', 'BOMs.xlsx')
+    bompath = os.path.join(rawDataPath, 'BOMs.xlsx')
     orgdf = pd.read_excel(bompath, header=0) #Opens and puts the data into a dataframe
     orgdf = orgdf.sort_values(by=['BOM','FG','PART'], ascending=[True,True,True]) #Sort the data by bom, finished good, then part
     return orgdf
@@ -311,7 +317,7 @@ def run_add_order_forecast():
     timingtest = ftlb.find_timing_issues(add_order[0], add_order[1])
     demand = ftlb.find_demand_driver(add_order[0])
     phantoms = ftlb.get_phantom_orders(demand)
-    workbook = xlsxwriter.Workbook('Z:\Python projects\Chris Forecast\Forecast\AddOrderForecast.xlsx')
+    workbook = xlsxwriter.Workbook(os.path.join(homey,'AddOrderForecast.xlsx'))
     orderslist = ftlb.split_phantoms(phantoms)
     worksheetP = workbook.add_worksheet('Purchasing')
     worksheetM = workbook.add_worksheet('Manufacturing')
@@ -337,7 +343,7 @@ def run_remove_order_forecast():
     timingtest = ftlb.find_timing_issues(remove_order[0], remove_order[1])
     demand = ftlb.find_demand_driver(remove_order[0])
     phantoms = ftlb.get_phantom_orders(demand)
-    workbook = xlsxwriter.Workbook('Z:\Python projects\Chris Forecast\Forecast\RemoveOrderForecast.xlsx')
+    workbook = xlsxwriter.Workbook(os.path.join(homey,'RemoveOrderForecast.xlsx'))
     orderslist = ftlb.split_phantoms(phantoms)
     worksheetP = workbook.add_worksheet('Purchasing')
     worksheetM = workbook.add_worksheet('Manufacturing')
@@ -357,8 +363,8 @@ def run_remove_order_forecast():
 """Run forecast with a tiered list of parts.  The tiered list helps prevent orders being attributed to the wrong "Grandparents".
    This pulls up to date info from Fishbowl, runs it, and saves it to an excel file."""
 def run_normal_forecast_tiers_v2(ignore_schedule_errors=False):
-    sql = ForecastAPI.run_queries() #Runs the function in ForecastAPI that pulls data from Fishbowl
-    print(sql) #Prints Queries Successful!
+    # sql = ForecastAPI.run_queries() #Runs the function in ForecastAPI that pulls data from Fishbowl
+    # print(sql) #Prints Queries Successful!
 
     datalist = data_prep()
     """
@@ -405,19 +411,19 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False):
     demand = ftlb.find_demand_driver(normal_orders[0])  # Runs the loop that figures out the top level driver for all the orders
     phantoms = ftlb.get_phantom_orders(demand)  # Returns all the phantom orders
 
-    writer = pd.ExcelWriter('Z:\Python projects\Chris Forecast\Forecast\mytimelinetest.xlsx')  # Creates a test excel file
+    writer = pd.ExcelWriter(os.path.join(homey, 'mytimelinetest.xlsx'))  # Creates a test excel file
     demand.to_excel(writer, 'Sheet')  # Fills the test excel with the whole timeline
     writer.save()
 
     demand = ftlb.add_inv_counter(inputTimeline=demand, backdate='1999-12-31 00:00:00', invdf=startinginvdf)  # This adds the column that shows actual inventory of a part through its orders on the timeline
 
-    workbook = xlsxwriter.Workbook('Z:\Python projects\Chris Forecast\Forecast\RegularForecast.xlsx')  # Create the actual final product excel file
+    workbook = xlsxwriter.Workbook(os.path.join(homey,'RegularForecast.xlsx'))  # Create the actual final product excel file
     orderslist = ftlb.split_phantoms(phantoms)  # Seperates purchase and manufacture phantom orders
     worksheetP = workbook.add_worksheet('Purchasing')  # Create the seperate worksheets for purchasing and manufacturing
     worksheetM = workbook.add_worksheet('Manufacturing')
 
     """experimental code section, trying to add part descriptions to MFG worksheet"""
-    descdf = pd.read_excel('Z:\Python projects\Chris Forecast\Forecast\ForecastRedoux\RawData\Descs.xlsx', header=0)
+    descdf = pd.read_excel(os.path.join(rawDataPath, 'Descs.xlsx'), header=0)
     orderslist[0] = pd.merge(orderslist[0].copy(), descdf.copy(), how='left', on='PART')
     orderslist[1] = pd.merge(orderslist[1].copy(), descdf.copy(), how='left', on='PART')
     columnList = ['ORDER', 'ITEM', 'ORDERTYPE', 'PART', 'QTYREMAINING', 'DATESCHEDULED', 'PARENT', 'Make/Buy', 'GRANDPARENT', 'DESCRIPTION']
@@ -447,7 +453,7 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False):
     workbook.close()  # Closing the workbook commits all the data
 
     # Saving a copy of the end timeline as "demand.xlsx" to use in other projects.
-    writer = pd.ExcelWriter('Z:\Python projects\Chris Forecast\Forecast\demand.xlsx')
+    writer = pd.ExcelWriter(os.path.join(homey,'demand.xlsx'))
     demand.to_excel(writer, 'timeline')
     writer.save()
 

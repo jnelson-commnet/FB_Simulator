@@ -5,10 +5,12 @@ import sys #Module to access the computer
 import os
 
 homey = os.getcwd()
-forcRedouxPath = os.path.join(homey, 'ForecastRedoux')
+redouxPath = os.path.join(homey, 'ForecastRedoux')
+print(redouxPath)
+print('ok')
 
 
-sys.path.insert(0, forcRedouxPath) #Pull up the file with the forecast information
+sys.path.insert(0, redouxPath) #Pull up the file with the forecast information
 
 import ForecastMain #Import the actual forecast python file
 

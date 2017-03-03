@@ -4,6 +4,9 @@ import pandas as pd
 import ForecastBOMExploder as bom
 import datetime as dt
 import ForecastSettings as fs
+import os
+
+homey = os.getcwd() # just using this to search for bugs, can avoid importing os once all links are removed.
 
 """This creates the BOM tier part lists."""
 """Remake of other function, drops runtime from 12 mins to under a second.  Hope it doesn't have bugs."""
@@ -18,7 +21,7 @@ def create_bom_tiers_v2(bomsdf, partsdf):
     current_tier_parts = []
 
     """ USING WRITER FOR BUGSEARCH """
-    writer = pd.ExcelWriter('Z:\Python projects\Chris Forecast\Forecast\\BugSearchTiers.xlsx', engine='xlsxwriter')
+    writer = pd.ExcelWriter(os.path.join(homey,'BugSearchTiers.xlsx'), engine='xlsxwriter')
 
     print('section 1')
     ''' This section isolates the parts that exist as FG on BOMs but not as Raw Goods. '''
