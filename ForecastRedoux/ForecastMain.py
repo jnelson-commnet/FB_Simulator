@@ -218,40 +218,40 @@ def stitch_builds_to_orders(newOrders, boms, missingboms, manyboms):
 """Takes away any orders that are known to not be included in the demand for a part.
     This goes through the same process as complete_orders_loop_redoux.
     First it grabs the parts from parts to remove and it removes those orders from the timeline."""
-def remove_orders(missingboms, manyboms):
-    droporders = pd.read_excel(os.path.join(homey, 'OrdersToRemove.xlsx'), sheetname='Sheet1')
-    ordersdf = gather_orders()
-    partsdf = gather_parts()
-    mbdf = make_buy(partsdf)
-    newordersdf = add_make_buy(ordersdf, mbdf)
-    invdf = gather_inventory()
-    bomsdf = gather_boms()
-    newtimeline = newordersdf
-    for item, row in droporders.iterrows():
-        if row['OrderType'] == 'MO':
-            newtimeline = newtimeline.ix[newtimeline['ITEM'] != row['OrderNum']].copy()
-        else:
-            newtimeline = newtimeline.ix[newtimeline['ORDER'] != str(row['OrderNum'])].copy()
-    column_headers = ['ORDER', 'ITEM', 'ORDERTYPE', 'PART', 'QTYREMAINING', 'DATESCHEDULED', 'PARENT', 'Make/Buy']
-    finalordersdf = pd.DataFrame(columns=column_headers)
-    shortorderslist = ftlb.find_next_shortage_redoux(invdf, newtimeline)
-    # shortagedf = shortorderslist[0]
-    # postordersdf = shortorderslist[1]
-    # preordersdf = shortorderslist[2]
-    # invdf = shortorderslist[3]
-    finalordersdf = finalordersdf.append(shortorderslist[2])
-    neworders = ftlb.make_new_orders(shortorderslist[0], bomsdf, missingboms, manyboms)
-    shortorderslist[1] = add_new_orders(shortorderslist[1], neworders)
-    while shortorderslist[1].empty == False:
-        shortorderslist = ftlb.find_next_shortage_redoux(shortorderslist[3], shortorderslist[1])
-        finalordersdf = finalordersdf.append(shortorderslist[2])
-        if shortorderslist[0].empty:
-            break
-        neworders = ftlb.make_new_orders(shortorderslist[0], bomsdf, missingboms, manyboms)
-        shortorderslist[1] = add_new_orders(shortorderslist[1], neworders)
-    finalordersdf = finalordersdf.sort_values(by=['PART', 'DATESCHEDULED'], ascending=[True, True])
-    finalordersdf.reset_index(drop=True, inplace=True)
-    return [finalordersdf, shortorderslist[3]]
+# def remove_orders(missingboms, manyboms):
+#     droporders = pd.read_excel(os.path.join(homey, 'OrdersToRemove.xlsx'), sheetname='Sheet1')
+#     ordersdf = gather_orders()
+#     partsdf = gather_parts()
+#     mbdf = make_buy(partsdf)
+#     newordersdf = add_make_buy(ordersdf, mbdf)
+#     invdf = gather_inventory()
+#     bomsdf = gather_boms()
+#     newtimeline = newordersdf
+#     for item, row in droporders.iterrows():
+#         if row['OrderType'] == 'MO':
+#             newtimeline = newtimeline.ix[newtimeline['ITEM'] != row['OrderNum']].copy()
+#         else:
+#             newtimeline = newtimeline.ix[newtimeline['ORDER'] != str(row['OrderNum'])].copy()
+#     column_headers = ['ORDER', 'ITEM', 'ORDERTYPE', 'PART', 'QTYREMAINING', 'DATESCHEDULED', 'PARENT', 'Make/Buy']
+#     finalordersdf = pd.DataFrame(columns=column_headers)
+#     shortorderslist = ftlb.find_next_shortage_redoux(invdf, newtimeline)
+#     # shortagedf = shortorderslist[0]
+#     # postordersdf = shortorderslist[1]
+#     # preordersdf = shortorderslist[2]
+#     # invdf = shortorderslist[3]
+#     finalordersdf = finalordersdf.append(shortorderslist[2])
+#     neworders = ftlb.make_new_orders(shortorderslist[0], bomsdf, missingboms, manyboms)
+#     shortorderslist[1] = add_new_orders(shortorderslist[1], neworders)
+#     while shortorderslist[1].empty == False:
+#         shortorderslist = ftlb.find_next_shortage_redoux(shortorderslist[3], shortorderslist[1])
+#         finalordersdf = finalordersdf.append(shortorderslist[2])
+#         if shortorderslist[0].empty:
+#             break
+#         neworders = ftlb.make_new_orders(shortorderslist[0], bomsdf, missingboms, manyboms)
+#         shortorderslist[1] = add_new_orders(shortorderslist[1], neworders)
+#     finalordersdf = finalordersdf.sort_values(by=['PART', 'DATESCHEDULED'], ascending=[True, True])
+#     finalordersdf.reset_index(drop=True, inplace=True)
+#     return [finalordersdf, shortorderslist[3]]
 
 # """Run the normal forecast. This does all the outside work. Pull data from API create the excel sheet and save it."""
 # def run_normal_forecast():
@@ -350,33 +350,33 @@ def remove_orders(missingboms, manyboms):
 
 """Run forecast with an order taken away. This does not pull fresh data!
     This does the same thing as run_normal-forecast"""
-def run_remove_order_forecast():
-    missingboms = fs.No_BOMs()
-    manyboms = fs.Many_BOMs()
-    remove_order = remove_orders(missingboms, manyboms)
-    timingtest = ftlb.find_timing_issues(remove_order[0], remove_order[1])
-    demand = ftlb.find_demand_driver(remove_order[0])
-    phantoms = ftlb.get_phantom_orders(demand)
-    workbook = xlsxwriter.Workbook(os.path.join(homey,'RemoveOrderForecast.xlsx'))
-    orderslist = ftlb.split_phantoms(phantoms)
-    worksheetP = workbook.add_worksheet('Purchasing')
-    worksheetM = workbook.add_worksheet('Manufacturing')
-    ftlb.create_subtotals_format(workbook=workbook, worksheet=worksheetP, thedf=orderslist[0], timinglist=timingtest)
-    ftlb.create_subtotals_format(workbook=workbook, worksheet=worksheetM, thedf=orderslist[1], timinglist=timingtest)
-    worksheetT = workbook.add_worksheet('Timeline')
-    ftlb.create_timeline_worksheet(workbook, worksheetT, demand)
-    worksheetN = workbook.add_worksheet('PartsWithNoBOM')
-    noboms = missingboms.get_parts()
-    ftlb.create_miss_bom_worksheet(worksheetN, noboms)
-    worksheetL = workbook.add_worksheet('PartsWithTooManyBOMs')
-    lotsboms = manyboms.get_parts()
-    ftlb.create_too_many_boms_worksheet(worksheetL, lotsboms)
-    workbook.close()
-    print('*The forecast is done!*')
+# def run_remove_order_forecast():
+#     missingboms = fs.No_BOMs()
+#     manyboms = fs.Many_BOMs()
+#     remove_order = remove_orders(missingboms, manyboms)
+#     timingtest = ftlb.find_timing_issues(remove_order[0], remove_order[1])
+#     demand = ftlb.find_demand_driver(remove_order[0])
+#     phantoms = ftlb.get_phantom_orders(demand)
+#     workbook = xlsxwriter.Workbook(os.path.join(homey,'RemoveOrderForecast.xlsx'))
+#     orderslist = ftlb.split_phantoms(phantoms)
+#     worksheetP = workbook.add_worksheet('Purchasing')
+#     worksheetM = workbook.add_worksheet('Manufacturing')
+#     ftlb.create_subtotals_format(workbook=workbook, worksheet=worksheetP, thedf=orderslist[0], timinglist=timingtest)
+#     ftlb.create_subtotals_format(workbook=workbook, worksheet=worksheetM, thedf=orderslist[1], timinglist=timingtest)
+#     worksheetT = workbook.add_worksheet('Timeline')
+#     ftlb.create_timeline_worksheet(workbook, worksheetT, demand)
+#     worksheetN = workbook.add_worksheet('PartsWithNoBOM')
+#     noboms = missingboms.get_parts()
+#     ftlb.create_miss_bom_worksheet(worksheetN, noboms)
+#     worksheetL = workbook.add_worksheet('PartsWithTooManyBOMs')
+#     lotsboms = manyboms.get_parts()
+#     ftlb.create_too_many_boms_worksheet(worksheetL, lotsboms)
+#     workbook.close()
+#     print('*The forecast is done!*')
 
 """Run forecast with a tiered list of parts.  The tiered list helps prevent orders being attributed to the wrong "Grandparents".
    This pulls up to date info from Fishbowl, runs it, and saves it to an excel file."""
-def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=False, sql_queries=True):
+def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=False, ignore_orders=False, sql_queries=True):
     if sql_queries==True:
         sql = ForecastAPI.run_queries() #Runs the function in ForecastAPI that pulls data from Fishbowl
         print(sql) #Prints Queries Successful!
@@ -394,13 +394,23 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=
     datalist[2] = bomsdf
     """
 
+    """ If you want to ignore some of the orders currently showing in FB, set ignore_orders=True.
+        This pulls its list to ignore from the OrdersToRemove.xlsx spreadsheet. """
+    if ignore_orders==True:
+        droporders = pd.read_excel(os.path.join(AdditionalInfoPath, 'OrdersToRemove.xlsx'), sheetname='Sheet1')
+        for item, row in droporders.iterrows():
+            if row['OrderType'] == 'MO':
+                datalist[0] = datalist[0].ix[datalist[0]['ITEM'] != row['OrderNum']].copy()
+            else:
+                datalist[0] = datalist[0].ix[datalist[0]['ORDER'] != str(row['OrderNum'])].copy()
+
     """ If you want to add some imaginary build amounts, pass add_stock_builds=True when you call the function.
         This pulls it's info from the PartsToBuild.xlsx spreadsheet. """
     if add_stock_builds==True:
         datalist[0] = stitch_builds_to_orders(datalist[0].copy(), datalist[2].copy(), missingboms, manyboms)
         print('Imaginary builds added ...')
 
-    print(datalist[0])
+    # print(datalist[0])
 
     """ If schedule issues aren't your thing, pass ignore_schedule_errors=True when you call the funtion. """
     if ignore_schedule_errors==True:
@@ -442,6 +452,8 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=
     demand.to_excel(writer, 'Sheet')  # Fills the test excel with the whole timeline
     writer.save()
 
+    print('Saved mytimelinetest.xlsx')
+
     demand = ftlb.add_inv_counter(inputTimeline=demand, backdate='1999-12-31 00:00:00', invdf=startinginvdf)  # This adds the column that shows actual inventory of a part through its orders on the timeline
 
     workbook = xlsxwriter.Workbook(os.path.join(homey,'RegularForecast.xlsx'))  # Create the actual final product excel file
@@ -462,6 +474,8 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=
     ftlb.create_subtotals_format(workbook=workbook, worksheet=worksheetM, thedf=orderslist[1], timinglist=timingtest)  # Then is calls another function to add the data in FTLB
     worksheetT = workbook.add_worksheet('Timeline')  # Adds another worksheet for the timeline
 
+    print('Subtotal sheets created ...')
+
     demand = pd.merge(demand.copy(), descdf.copy(), how='left', on='PART')  # Adding descriptions to timeline
     demand.sort_values(by=['PART', 'DATESCHEDULED'], ascending=[True, True], inplace=True)  #  Resorting it for readability before saving
     newColHeaders = ['ORDER', 'ITEM', 'ORDERTYPE', 'PART', 'QTYREMAINING', 'INV', 'DATESCHEDULED', 'PARENT', 'Make/Buy', 'GRANDPARENT', 'DESCRIPTION']
@@ -478,6 +492,8 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=
     lotsboms = manyboms.get_parts()  # Returns the parts with many active BOMs
     ftlb.create_too_many_boms_worksheet(worksheetL, lotsboms)  # Fills the worksheet with data
     workbook.close()  # Closing the workbook commits all the data
+
+    print('workbook closed')
 
     # Saving a copy of the end timeline as "demand.xlsx" to use in other projects.
     writer = pd.ExcelWriter(os.path.join(homey,'demand.xlsx'))
