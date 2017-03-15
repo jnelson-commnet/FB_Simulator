@@ -168,6 +168,14 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=
     datalist[2] = bomsdf
     """
 
+    """ If schedule issues aren't your thing, pass ignore_schedule_errors=True when you call the funtion. """
+    if ignore_schedule_errors==True:
+        print('adjusting schedule to avoid issues ...')
+        datalist[0] = bandaid_schedule_issues(datalist[0])  # <----- This is the only unique line to trick the forecast.
+                                                            #        It bumps orders that increase inventory about 5 years in the past so they resolve first.
+                                                            #        It's not perfect, I think it might make excess schedule issues for make items.  Haven't proven it yet.
+
+
     """ If you want to ignore some of the orders currently showing in FB, set ignore_orders=True.
         This pulls its list to ignore from the OrdersToRemove.xlsx spreadsheet. """
     if ignore_orders==True:
@@ -187,12 +195,6 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=
 
     # print(datalist[0])
 
-    """ If schedule issues aren't your thing, pass ignore_schedule_errors=True when you call the funtion. """
-    if ignore_schedule_errors==True:
-        print('adjusting schedule to avoid issues ...')
-        datalist[0] = bandaid_schedule_issues(datalist[0])  # <----- This is the only unique line to trick the forecast.
-                                                            #        It bumps orders that increase inventory about 5 years in the past so they resolve first.
-                                                            #        It's not perfect, I think it might make excess schedule issues for make items.  Haven't proven it yet.
 
     normal_orders = [datalist[0], datalist[1]]  # newordersdf, invdf
     invdf = datalist[1]
@@ -218,6 +220,7 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=
 
     print('*Timeline Has Been Created*')
 
+    ### Timing test is borked!!!  Definitely should tie it into add_inv_counter result when reworking.
     timingtest = ftlb.find_timing_issues(normal_orders[0], normal_orders[1])  # Finds parts that have phantom orders and are left with a positive inventory
 
     demand = ftlb.find_demand_driver(normal_orders[0])  # Runs the loop that figures out the top level driver for all the orders
