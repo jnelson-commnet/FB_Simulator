@@ -1,32 +1,38 @@
 __author__ = 'Chris'
 
+import os
 import sys
 
-sys.path.insert(0, "/mnt/manufacturing/Shared Services/Python projects/FishbowlAPITestProject")
+sys.path.insert(0, 'Z:\Python projects\FishbowlAPITestProject')
 
 import connecttest
 
+homey = os.getcwd()
+redouxPath = os.path.join(homey, 'ForecastRedoux')
+sqlPath = os.path.join(redouxPath, 'SQL')
+rawDataPath = os.path.join(redouxPath, 'RawData')
+
 def run_queries():
-    myresults = connecttest.create_connection('/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/SQL', 'BOMQuery.txt')
+    myresults = connecttest.create_connection(sqlPath, 'BOMQuery.txt')
     myexcel = connecttest.makeexcelsheet(myresults)
-    connecttest.save_workbook(myexcel, '/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/RawData', 'BOMs.xlsx')
-    myresults = connecttest.create_connection('/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/SQL', 'PartQuery.txt')
+    connecttest.save_workbook(myexcel, rawDataPath, 'BOMs.xlsx')
+    myresults = connecttest.create_connection(sqlPath, 'PartQuery.txt')
     myexcel = connecttest.makeexcelsheet(myresults)
-    connecttest.save_workbook(myexcel, '/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/RawData', 'Parts.xlsx')
-    myresults = connecttest.create_connection('/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/SQL', 'MOQueryRedoux.txt')
+    connecttest.save_workbook(myexcel, rawDataPath, 'Parts.xlsx')
+    myresults = connecttest.create_connection(sqlPath, 'MOQueryRedoux.txt')
     myexcel = connecttest.makeexcelsheet(myresults)
-    connecttest.save_workbook(myexcel, '/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/RawData', 'MOs.xlsx')
-    myresults = connecttest.create_connection('/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/SQL', 'POQuery.txt')
+    connecttest.save_workbook(myexcel, rawDataPath, 'MOs.xlsx')
+    myresults = connecttest.create_connection(sqlPath, 'POQuery.txt')
     myexcel = connecttest.makeexcelsheet(myresults)
-    connecttest.save_workbook(myexcel, '/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/RawData', 'POs.xlsx')
-    myresults = connecttest.create_connection('/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/SQL', 'SOQuery.txt')
+    connecttest.save_workbook(myexcel, rawDataPath, 'POs.xlsx')
+    myresults = connecttest.create_connection(sqlPath, 'SOQuery.txt')
     myexcel = connecttest.makeexcelsheet(myresults)
-    connecttest.save_workbook(myexcel, '/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/RawData', 'SOs.xlsx')
-    myresults = connecttest.create_connection('/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/SQL', 'INVQuery.txt')
+    connecttest.save_workbook(myexcel, rawDataPath, 'SOs.xlsx')
+    myresults = connecttest.create_connection(sqlPath, 'INVQuery.txt')
     myexcel = connecttest.makeexcelsheet(myresults)
-    connecttest.save_workbook(myexcel, '/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/RawData', 'INVs.xlsx')
-    myresults = connecttest.create_connection('/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/SQL', 'DescQuery.txt')
+    connecttest.save_workbook(myexcel, rawDataPath, 'INVs.xlsx')
+    myresults = connecttest.create_connection(sqlPath, 'DescQuery.txt')
     myexcel = connecttest.makeexcelsheet(myresults)
-    connecttest.save_workbook(myexcel, '/mnt/manufacturing/Shared Services/Projects/RaspberryPi/Forecast/ForecastRedoux/RawData', 'Descs.xlsx')
+    connecttest.save_workbook(myexcel, rawDataPath, 'Descs.xlsx')
     return 'Queries Successful'
 

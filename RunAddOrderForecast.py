@@ -1,9 +1,13 @@
 __author__ = 'Chris'
 
 import sys
+import os
 
-sys.path.insert(0, 'Z:\Python projects\Forecast\ForecastRedoux')
+homey = os.getcwd()
+redouxPath = os.path.join(homey, 'ForecastRedoux')
 
-import ForecastMain
+sys.path.insert(0, redouxPath) #Pull up the file with the forecast information
 
-ForecastMain.run_add_order_forecast()
+import ForecastMain #Import the actual forecast python file
+
+ForecastMain.run_normal_forecast_tiers_v2(add_stock_builds=True, sql_queries=False) #Run the actual forecast
