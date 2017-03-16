@@ -5,8 +5,6 @@ import os
 
 homey = os.getcwd()
 redouxPath = os.path.join(homey, 'ForecastRedoux')
-# print(redouxPath)
-# print('ok')
 
 sys.path.insert(0, redouxPath) #Pull up the file with the forecast information
 

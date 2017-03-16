@@ -7,13 +7,10 @@ sys.path.insert(0, 'Z:\Python projects\FishbowlAPITestProject')
 
 import connecttest
 
-# print('API Paths')
 homey = os.getcwd()
 redouxPath = os.path.join(homey, 'ForecastRedoux')
 sqlPath = os.path.join(redouxPath, 'SQL')
 rawDataPath = os.path.join(redouxPath, 'RawData')
-# print(sqlPath)
-# print(rawDataPath)
 
 def run_queries():
     myresults = connecttest.create_connection(sqlPath, 'BOMQuery.txt')
