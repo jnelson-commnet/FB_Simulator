@@ -382,6 +382,8 @@ def find_timing_issues(timeline, lastinv):
 
 """This loops through finding the original demand driver."""
 def find_demand_driver(timeline):
+    timeline = timeline.sort_values(by=['PART', 'DATESCHEDULED', 'ORDER'], ascending=[True, True, True]) ### I think sorting and reseting the index will make this all function.
+    timeline.reset_index(drop=True, inplace=True)  # without reseting the index, whenever a value was assigned to GRANDPARENT, it was assigning multiple rows because of duplicate indexes.
     phantomtimelineP = timeline.ix[timeline['ITEM'] == 'Phantom']  # Grabs Phantom lines
     # print(phantomtimelineP)
     phantomtimelineI = timeline.ix[timeline['ITEM'] == 'Imaginary']  # Grabs Imaginary lines
