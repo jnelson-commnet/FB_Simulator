@@ -220,9 +220,16 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=
 
     print('*Timeline Has Been Created*')
 
+    # writer = pd.ExcelWriter(os.path.join(homey, 'rawTimeline.xlsx'))  # Creates a test excel file
+    # normal_orders[0].to_excel(writer, 'Sheet')  # Fills the test excel with the whole timeline
+    # writer.save()
+
+    # print('TIMING TEST SAVED< YOU CAN STOP NOW')
+
     ### Timing test is borked!!!  Definitely should tie it into add_inv_counter result when reworking.
     timingtest = ftlb.find_timing_issues(normal_orders[0], normal_orders[1])  # Finds parts that have phantom orders and are left with a positive inventory
 
+    ### find_demand_driver() seems to not like Imaginary orders...  Fix this, fix the world.
     demand = ftlb.find_demand_driver(normal_orders[0])  # Runs the loop that figures out the top level driver for all the orders
     phantoms = ftlb.get_phantom_orders(demand)  # Returns all the phantom orders
 

@@ -382,66 +382,66 @@ def find_timing_issues(timeline, lastinv):
 
 """This loops through finding the original demand driver."""
 def find_demand_driver(timeline):
-    phantomtimelineP = timeline.ix[timeline['ITEM'] == 'Phantom']
+    phantomtimelineP = timeline.ix[timeline['ITEM'] == 'Phantom']  # Grabs Phantom lines
     # print(phantomtimelineP)
-    phantomtimelineI = timeline.ix[timeline['ITEM'] == 'Imaginary']
+    phantomtimelineI = timeline.ix[timeline['ITEM'] == 'Imaginary']  # Grabs Imaginary lines
     # print(phantomtimelineI)
-    phantomtimeline = phantomtimelineP.append(phantomtimelineI)
-    for index, row in phantomtimeline.iterrows():
+    phantomtimeline = phantomtimelineP.copy().append(phantomtimelineI.copy())  # and combines 'em
+    for index, row in phantomtimeline.iterrows():  # Iterates through all phantom and imaginary order lines
         if row['ORDERTYPE'] == 'Purchase':
-            tempparent = timeline.ix[timeline['ORDER'] == row['PARENT']].copy()
-            tempparent = tempparent.ix[tempparent['PART'] == row['PART']].copy()
+            parentTemp = timeline.ix[timeline['ORDER'] == row['PARENT']].copy()
+            parentTemp = parentTemp.ix[parentTemp['PART'] == row['PART']].copy()
             while True:
-                tempparent.reset_index(drop=True, inplace=True)
-                if tempparent.get_value(0, 'ITEM') == 'Phantom':
-                    if tempparent.get_value(0, 'ORDERTYPE') == 'Raw Good':
-                        tempparenttemp = timeline.ix[timeline['ORDER'] == tempparent.get_value(0, 'ORDER')]
-                        tempparent = tempparenttemp.ix[tempparenttemp['ORDERTYPE'] == 'Finished Good']
+                parentTemp.reset_index(drop=True, inplace=True)
+                if parentTemp.get_value(0, 'ITEM') == 'Phantom':
+                    if parentTemp.get_value(0, 'ORDERTYPE') == 'Raw Good':
+                        secondTempHold = timeline.ix[timeline['ORDER'] == parentTemp.get_value(0, 'ORDER')]
+                        parentTemp = secondTempHold.ix[secondTempHold['ORDERTYPE'] == 'Finished Good']
                     else:
-                        tempparenttemp = timeline.ix[timeline['ORDER'] == tempparent.get_value(0, 'PARENT')]
-                        tempparent = tempparenttemp.ix[tempparenttemp['PART'] == tempparent.get_value(0, 'PART')]
-                elif tempparent.get_value(0, 'ITEM') == 'Imaginary':
-                    if tempparent.get_value(0, 'ORDERTYPE') == 'Raw Good':
-                        tempparenttemp = timeline.ix[timeline['ORDER'] == tempparent.get_value(0, 'ORDER')]
-                        tempparent = tempparenttemp.ix[tempparenttemp['ORDERTYPE'] == 'Finished Good']
-                    elif tempparent.get_value(0, 'ORDER') == tempparent.get_value(0, 'PARENT'):
-                        tempparent.reset_index(drop=True, inplace=True)
-                        rowp = tempparent.get_value(0, 'PARENT')
+                        secondTempHold = timeline.ix[timeline['ORDER'] == parentTemp.get_value(0, 'PARENT')]
+                        parentTemp = secondTempHold.ix[secondTempHold['PART'] == parentTemp.get_value(0, 'PART')]
+                elif parentTemp.get_value(0, 'ITEM') == 'Imaginary':
+                    if parentTemp.get_value(0, 'ORDERTYPE') == 'Raw Good':
+                        secondTempHold = timeline.ix[timeline['ORDER'] == parentTemp.get_value(0, 'ORDER')]
+                        parentTemp = secondTempHold.ix[secondTempHold['ORDERTYPE'] == 'Finished Good']
+                    elif parentTemp.get_value(0, 'ORDER') == parentTemp.get_value(0, 'PARENT'):
+                        parentTemp.reset_index(drop=True, inplace=True)
+                        rowp = parentTemp.get_value(0, 'PARENT')
                         timeline.ix[index, 'GRANDPARENT'] = rowp
                         break
                     else:
-                        tempparenttemp = timeline.ix[timeline['ORDER'] == tempparent.get_value(0, 'PARENT')]
-                        tempparent = tempparenttemp.ix[tempparenttemp['PART'] == tempparent.get_value(0, 'PART')]
+                        secondTempHold = timeline.ix[timeline['ORDER'] == parentTemp.get_value(0, 'PARENT')]
+                        parentTemp = secondTempHold.ix[secondTempHold['PART'] == parentTemp.get_value(0, 'PART')]
                 else:
-                    tempparent.reset_index(drop=True, inplace=True)
-                    rowp = tempparent.get_value(0, 'PARENT')
+                    parentTemp.reset_index(drop=True, inplace=True)
+                    rowp = parentTemp.get_value(0, 'PARENT')
                     timeline.ix[index, 'GRANDPARENT'] = rowp
                     break
         else:
             if row['ORDERTYPE'] == 'Raw Good':
-                tempparenttemp = timeline.ix[timeline['ORDER'] == row['ORDER']]
-                tempparent = tempparenttemp.ix[tempparenttemp['ORDERTYPE'] == 'Finished Good']
+                secondTempHold = timeline.ix[timeline['ORDER'] == row['ORDER']]
+                parentTemp = secondTempHold.ix[secondTempHold['ORDERTYPE'] == 'Finished Good']
             else:
-                tempparent = timeline[timeline['ORDER'] == row['ORDER']]
-                tempparent = tempparent[tempparent['PART'] == row['PART']]
+                parentTemp = timeline[timeline['ORDER'] == row['ORDER']]
+                parentTemp = parentTemp[parentTemp['PART'] == row['PART']]
             while True:
-                tempparent.reset_index(drop=True, inplace=True)
-                if tempparent.get_value(0, 'ORDERTYPE') == 'Raw Good':
-                    tempparenttemp = timeline.ix[timeline['ORDER'] == tempparent.get_value(0, 'ORDER')]
-                    tempparent = tempparenttemp.ix[tempparenttemp['ORDERTYPE'] == 'Finished Good']
-                    tempparent.reset_index(drop=True, inplace=True)
-                if tempparent.get_value(0, 'ITEM') == 'Phantom':
-                    tempparenttemp = timeline.ix[timeline['ORDER'] == tempparent.get_value(0, 'PARENT')]
-                    tempparent = tempparenttemp.ix[tempparenttemp['PART'] == tempparent.get_value(0, 'PART')]
-                elif tempparent.get_value(0, 'ITEM') == 'Imaginary':
-                    if tempparent.get_value(0, 'ORDER') == tempparent.get_value(0, 'PARENT'):
-                        timeline.ix[index, 'GRANDPARENT'] = tempparent.get_value(0, 'PARENT')
+                parentTemp.reset_index(drop=True, inplace=True)
+                if parentTemp.get_value(0, 'ORDERTYPE') == 'Raw Good':
+                    secondTempHold = timeline.ix[timeline['ORDER'] == parentTemp.get_value(0, 'ORDER')]
+                    parentTemp = secondTempHold.ix[secondTempHold['ORDERTYPE'] == 'Finished Good']
+                    parentTemp.reset_index(drop=True, inplace=True)
+                if parentTemp.get_value(0, 'ITEM') == 'Phantom':
+                    secondTempHold = timeline.ix[timeline['ORDER'] == parentTemp.get_value(0, 'PARENT')]
+                    parentTemp = secondTempHold.ix[secondTempHold['PART'] == parentTemp.get_value(0, 'PART')]
+                elif parentTemp.get_value(0, 'ITEM') == 'Imaginary':
+                    if parentTemp.get_value(0, 'ORDER') == parentTemp.get_value(0, 'PARENT'):
+                        timeline.ix[index, 'GRANDPARENT'] = parentTemp.get_value(0, 'PARENT')
                         break
                     else:
-                        tempparenttemp = timeline.ix[timeline['ORDER'] == tempparent.get_value(0, 'PARENT')]
-                        tempparent = tempparenttemp.ix[tempparenttemp['PART'] == tempparent.get_value(0, 'PART')]
+                        secondTempHold = timeline.ix[timeline['ORDER'] == parentTemp.get_value(0, 'PARENT')]
+                        parentTemp = secondTempHold.ix[secondTempHold['PART'] == parentTemp.get_value(0, 'PART')]
                 else:
-                    timeline.ix[index, 'GRANDPARENT'] = tempparent.get_value(0, 'PARENT')
+                    timeline.ix[index, 'GRANDPARENT'] = parentTemp.get_value(0, 'PARENT')
                     break
     return timeline
 
