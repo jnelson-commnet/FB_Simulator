@@ -41,10 +41,29 @@ def gather_inventory():
     orgdf = orgdf.sort_values(by='PART', ascending=True) #Sort the data by part
     return orgdf
 
+"""Converts quantities to the default unit of measure for each part
+    uomid 1 is 'ea'
+    uomid 2 is 'ft'
+    uomid 7 is 'in' """
+def fix_uom(orgdf):
+    uomIssues = orgdf[orgdf['BOMUOM'] != orgdf['PARTUOM']].copy()
+    for index, row in uomIssues.iterrows():
+        if (row['BOMUOM'] == 1 and row['PARTUOM'] == 2): # if BOM is 'ea' and part is 'ft' then multiply by 2
+            orgdf.set_value(index, 'QTY', (row['QTY'] * 2))
+        elif (row['BOMUOM'] == 2 and row['PARTUOM'] == 1): # if BOM is 'ft' and part is 'ea' then divide by 2
+            orgdf.set_value(index, 'QTY', (row['QTY'] / 2))
+        elif (row['BOMUOM'] == 2 and row['PARTUOM'] == 7): # if BOM is 'ft' and part is 'in' then multiply by 12
+            orgdf.set_value(index, 'QTY', (row['QTY'] * 12))
+        elif (row['BOMUOM'] == 7 and row['PARTUOM'] == 2): # if BOM is 'in' and part is 'ft' then divide by 12
+            orgdf.set_value(index, 'QTY', (row['QTY'] / 12))
+    return(orgdf.copy())
+
 """Pull the BOM data"""
 def gather_boms():
     bompath = os.path.join(rawDataPath, 'BOMs.xlsx')
     orgdf = pd.read_excel(bompath, header=0) #Opens and puts the data into a dataframe
+    orgdf = fix_uom(orgdf) # edits quantities to match default UOM
+    orgdf.drop(['BOMUOM','PARTUOM'], axis=1, inplace=True) # drops UOM reference columns
     orgdf = orgdf.sort_values(by=['BOM','FG','PART'], ascending=[True,True,True]) #Sort the data by bom, finished good, then part
     return orgdf
 
