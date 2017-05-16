@@ -61,7 +61,9 @@ def order_exploder_new_order(bomsdf, fgdf, missingbomlist, manybomlist):
             partsdf = partsdf.loc[partsdf['BOM'] == workingbom.iloc[0]['BOM']].copy()
             break
         except IndexError:
-            # print('%s is missing an active BOM!' %fgdf['PART'])
+            ''' If an imaginary build doesn't have a BOM, this will print it and save it to the "missing BOMs list"
+                Note that the script will probably fail when saving to Excel. '''
+            print('%s is missing an active BOM!' %fgdf['PART'])
             missingbomlist.add_part(fgdf['PART'])
             fake_columns = ['QTY']
             partsdf = pd.DataFrame(columns=fake_columns)

@@ -205,7 +205,8 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=
         print('Excess orders removed ...')
 
     """ If you want to add some imaginary build amounts, pass add_stock_builds=True when you call the function.
-        This pulls it's info from the PartsToBuild.xlsx spreadsheet. """
+        This pulls it's info from the PartsToBuild.xlsx spreadsheet.
+        Note that the script will eventually fail if any of the parts in this list do not have an active BOM. """
     if add_stock_builds==True:
         datalist[0] = stitch_builds_to_orders(datalist[0].copy(), datalist[2].copy(), missingboms, manyboms)
         print('Imaginary builds added ...')
