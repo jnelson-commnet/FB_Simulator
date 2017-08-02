@@ -58,6 +58,9 @@ def order_exploder_new_order(bomsdf, fgdf, missingbomlist, manybomlist):
     partsdf = bomsdf.ix[bomsdf.FG == 20].copy()
     while True:
         try:
+            # print('*** finding problem spot ***')
+            # print(workingbom.iloc[0]['BOM'])
+            # Warning: this can break if there are multiple active BOMs to produce a part!
             partsdf = partsdf.loc[partsdf['BOM'] == workingbom.iloc[0]['BOM']].copy()
             break
         except IndexError:

@@ -8,7 +8,8 @@ import ForecastSettings as fs
 import xlsxwriter
 import datetime as dt
 
-homey = os.getcwd()
+# homey = os.getcwd() # not working on Pi
+homey = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..'))
 redouxPath = os.path.join(homey, 'ForecastRedoux')
 rawDataPath = os.path.join(redouxPath, 'RawData')
 AdditionalInfoPath = os.path.join(homey, 'AdditionalInfo')

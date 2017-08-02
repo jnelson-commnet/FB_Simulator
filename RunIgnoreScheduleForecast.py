@@ -3,7 +3,7 @@ __author__ = 'Chris'
 import sys #Module to access the computer
 import os
 
-homey = os.getcwd()
+homey = os.path.abspath(os.path.dirname(__file__))
 redouxPath = os.path.join(homey, 'ForecastRedoux')
 # print(redouxPath)
 # print('ok')

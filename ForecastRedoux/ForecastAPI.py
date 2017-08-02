@@ -3,11 +3,17 @@ __author__ = 'Chris'
 import os
 import sys
 
+# Live server:
 sys.path.insert(0, 'Z:\Python projects\FishbowlAPITestProject')
+# Test server:
+# sys.path.insert(0, 'Z:\Python projects\FB_API_TestServer')
 
 import connecttest
 
-homey = os.getcwd()
+# homey = os.getcwd()
+homey = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..'))
+# print('forecast api ----')
+# print(homey)
 redouxPath = os.path.join(homey, 'ForecastRedoux')
 sqlPath = os.path.join(redouxPath, 'SQL')
 rawDataPath = os.path.join(redouxPath, 'RawData')
