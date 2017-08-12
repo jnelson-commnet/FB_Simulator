@@ -240,8 +240,6 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=
     print('*Timeline Has Been Created*')
 
 
-    ### Timing test is borked!!!  Definitely should tie it into add_inv_counter result when reworking.
-    timingtest = ftlb.find_timing_issues(normal_orders[0], normal_orders[1])  # Finds parts that have phantom orders and are left with a positive inventory
 
     demand = ftlb.find_demand_driver(normal_orders[0])  # Runs the loop that figures out the top level driver for all the orders
     phantoms = ftlb.get_phantom_orders(demand)  # Returns all the phantom orders
@@ -253,6 +251,9 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=
     print('Saved mytimelinetest.xlsx')
 
     demand = ftlb.add_inv_counter(inputTimeline=demand, backdate='1999-12-31 00:00:00', invdf=startinginvdf)  # This adds the column that shows actual inventory of a part through its orders on the timeline
+
+    ### Timing test is borked!!!  Definitely should tie it into add_inv_counter result when reworking.
+    timingtest = ftlb.find_timing_issues(demand.copy())  # Finds parts that have phantom orders and are left with a positive inventory
 
     workbook = xlsxwriter.Workbook(os.path.join(homey,'RegularForecast.xlsx'))  # Create the actual final product excel file
     orderslist = ftlb.split_phantoms(phantoms)  # Seperates purchase and manufacture phantom orders

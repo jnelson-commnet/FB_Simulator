@@ -305,16 +305,16 @@ def add_phantom_order(phantomdf, timeline):
     return workingtimeline
 
 """Checks ending inventory to see about timing issues."""
-def find_timing_issues(timeline, lastinv):
-    phantomtimeline = timeline.ix[timeline['ITEM'] == 'Phantom']  # get all phantom order lines
-    phantomtimelineP = phantomtimeline.ix[phantomtimeline['ORDERTYPE'] == 'Purchase'].copy()  # phantom purchase lines
-    phantomtimelineF = phantomtimeline.ix[phantomtimeline['ORDERTYPE'] == 'Finished Good'].copy()  # phantom manufacture lines
-    phantomtimeline = phantomtimelineF.append(phantomtimelineP)  # all phantom lines?  The only reason this would be necessary is if there are more phantoms than purchase or MO.
-    partlist = phantomtimeline.PART.unique()  # series of any parts showing up in phantom orders
-    phantominv = lastinv[lastinv.PART.isin(partlist)]  # pulls the resultant inventory of the forecast for all parts that exist in phantom orders
-    timinglist = phantominv.ix[phantominv['INV'] > 0]  # timinglist is all the phantom order parts that ended up with positive inventory
-    timinglist = timinglist['PART'].tolist()  # convert it to a list before returning
-    return timinglist
+def find_timing_issues(timeline):
+    phantoms = timeline[timeline['ITEM'] == 'Phantom'].copy()  # get all phantom order lines
+    reducedPhantoms = phantoms[(phantoms['ORDERTYPE'] == 'Purchase') | (phantoms['ORDERTYPE'] == 'Finished Good')].copy()  # all phantom lines except raw goods
+    phantomList = reducedPhantoms['PART'].unique()  # series of any parts showing up in phantom orders
+    lastinv = timeline.drop_duplicates(subset='PART', keep='last')  # final inventory of all parts
+    lastinv = lastinv[['PART','INV']]  # reduced to part numbers and inventory
+    phantomInv = lastinv[lastinv['PART'].isin(phantomList)]  # final inventory of only parts with phantom purchase or FG lines
+    phantomInv = phantomInv[phantomInv['INV'] > 0.1]  # reduced to only parts ending with a positive inventory (or close enough, damn floats)
+    timingList = phantomInv['PART'].tolist()  # convert the part numbers to a list for reference later
+    return timingList
 
 """This loops through finding the original demand driver."""
 def find_demand_driver(timeline):
