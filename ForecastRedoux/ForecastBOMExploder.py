@@ -43,7 +43,7 @@ def order_exploder(bomsdf, fgdf, ordernum, missingbomlist, manybomlist):
         for i in range(0, 8):
             tempdic[column_headers[i]] = [templist[i]]
         tempdf = pd.DataFrame.from_dict(tempdic)
-        bomdf = bomdf.append(tempdf)
+        bomdf = bomdf.append(tempdf, sort=False)
     return bomdf.copy()
 
 def order_exploder_new_order(bomsdf, fgdf, missingbomlist, manybomlist):
@@ -87,5 +87,5 @@ def order_exploder_new_order(bomsdf, fgdf, missingbomlist, manybomlist):
         for i in range(0, 8):
             tempdic[column_headers[i]] = [templist[i]]
         tempdf = pd.DataFrame.from_dict(tempdic)
-        bomdf = bomdf.append(tempdf)
+        bomdf = bomdf.append(tempdf, sort=False)
     return bomdf

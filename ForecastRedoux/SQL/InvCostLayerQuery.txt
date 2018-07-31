@@ -1,0 +1,17 @@
+select
+    part.num as "PART",
+    costlayer.datecreated,
+    costlayer.orgqty,
+    costlayer.qty as "2018INV",
+    costlayer.orgtotalcost,
+    costlayer.totalcost,
+    costlayer.statusid,
+    customset.info as "Asset Class"
+from
+    costlayer
+    left join part on part.id = costlayer.partid
+    left join customset on part.id = customset.recordid
+where
+    customset.customfieldid = 71
+    and costlayer.statusid = 10
+    and costlayer.datecreated > "2018-01-01" -- this determines the switch between stale and fresh inventory

@@ -24,7 +24,7 @@ def create_bom_tiers_v2(bomsdf, partsdf):
     fglist = bomsdf[bomsdf.FG == 10].copy()
     uniqueFG = fglist.drop_duplicates('PART').copy()
     rglist = bomsdf[bomsdf.FG == 20].copy()
-    uniqueFG = uniqueFG.copy().append(rglist.copy())
+    uniqueFG = uniqueFG.copy().append(rglist.copy(), sort=False)
     uniqueFG.drop_duplicates('PART', keep=False, inplace=True)
     uniqueFG = uniqueFG[uniqueFG.FG == 10].copy()
 
@@ -63,7 +63,7 @@ def create_bom_tiers_v2(bomsdf, partsdf):
             tierdict[current_tier_index] = partlist['PART'].tolist().copy()  # Then save whatever is left on the partlist
             break  # and move on to the next step
 
-        tierTracker = tierTracker.copy().append(nextTier[['PART','TIER']].copy())
+        tierTracker = tierTracker.copy().append(nextTier[['PART','TIER']].copy(), sort=False)
 
         partlist.dropna(subset=['TIER'], inplace=True)
         partlist.drop('TIER', axis='columns', inplace=True)
@@ -118,26 +118,26 @@ def find_next_shortage_redoux(invdf, postordersdf):
         if currentinv.empty:
             workinginv = 0
             tempinvdf = pd.DataFrame({'PART': [each], 'INV': [0]})
-            invdf = invdf.append(tempinvdf)
+            invdf = invdf.append(tempinvdf, sort=False)
         else:
             currentinv.reset_index(drop=True, inplace=True)
             workinginv = currentinv.at[0,'INV']
         for index, row in tempordersdf.iterrows():
             if (workinginv <= 0 and row['QTYREMAINING'] < 0): #This is the heart of the loop
-                shortagedf = shortagedf.append(row)
+                shortagedf = shortagedf.append(row, sort=False)
                 # tempordersdf.ix[index]['PriorInv'] = workinginv
-                preordersdf = preordersdf.append(tempordersdf.ix[index])
+                preordersdf = preordersdf.append(tempordersdf.ix[index], sort=False)
                 workinginv = workinginv + row['QTYREMAINING']
                 postordersdf = postordersdf.drop(labels=index)
                 break
             else:
                 # tempordersdf.ix[index]['PriorInv'] = workinginv
-                preordersdf = preordersdf.append(tempordersdf.ix[index])
+                preordersdf = preordersdf.append(tempordersdf.ix[index], sort=False)
                 workinginv = workinginv + row['QTYREMAINING']
                 postordersdf = postordersdf.drop(labels=index)
                 if (workinginv < 0 and row['QTYREMAINING'] < 0):
                     row['QTYREMAINING'] = workinginv
-                    shortagedf = shortagedf.append(row)
+                    shortagedf = shortagedf.append(row, sort=False)
                     break
         invdf.ix[(invdf['PART'] == each),'INV'] = workinginv
     return [shortagedf, postordersdf, preordersdf, invdf]
@@ -176,7 +176,7 @@ def find_next_shortage_redux(invdf, postordersdf, tierlist):
         if currentinv.empty:
             workinginv = 0
             tempinvdf = pd.DataFrame({'PART': [each], 'INV': [0]})
-            invdf = invdf.append(tempinvdf)
+            invdf = invdf.append(tempinvdf, sort=False)
         else:
             currentinv.reset_index(drop=True, inplace=True)
             workinginv = currentinv.at[0,'INV']
@@ -193,22 +193,22 @@ def find_next_shortage_redux(invdf, postordersdf, tierlist):
             # print(row)
             if (workinginv <= 0 and row['QTYREMAINING'] < 0): #This is the heart of the loop.  If out of inv and the order reducing it further:
                 # print('section A')
-                shortagedf = shortagedf.copy().append(row)  # save the order to shortages
+                shortagedf = shortagedf.copy().append(row, sort=False)  # save the order to shortages
                 # tempordersdf.ix[index]['PriorInv'] = workinginv # what is this?
-                preordersdf = preordersdf.append(tempordersdf.ix[index]) # save the order to preorders
+                preordersdf = preordersdf.append(tempordersdf.ix[index], sort=False) # save the order to preorders
                 workinginv = workinginv + row['QTYREMAINING']  # adjust inv based on the order
                 postordersdf = postordersdf.drop(labels=index)  # drop the order from postorders
                 break  # exit the loop of this part
             else:  # If either the inv or the order are positive
                 # print('section B')
                 # tempordersdf.ix[index]['PriorInv'] = workinginv # what is this?
-                preordersdf = preordersdf.append(tempordersdf.ix[index])  # save order to preorders
+                preordersdf = preordersdf.append(tempordersdf.ix[index], sort=False)  # save order to preorders
                 workinginv = workinginv + row['QTYREMAINING']  # adjust inv based on the order
                 postordersdf = postordersdf.drop(labels=index)  # drop the order from postorders
                 if (workinginv < 0 and row['QTYREMAINING'] < 0):  # if inv is now negative and the order row was also negative
                     # print('section C')
                     row['QTYREMAINING'] = workinginv  # then make the order qty equal to inventory since that is how much this is short
-                    shortagedf = shortagedf.append(row)  # and add it to shortages
+                    shortagedf = shortagedf.append(row, sort=False)  # and add it to shortages
                     break  # breaker out of this part's loop
         # print('-----------')
         # print(invdf[invdf['PART'] == each])
@@ -253,7 +253,7 @@ def make_new_orders(shortordersdf, bomsdf, missingbomlist, manybomlist):
         if row['Make/Buy'] == 'Make':
             ordertype = 'Finished Good'
             bomdf = bom.order_exploder(bomsdf, row, order, missingbomlist, manybomlist)
-            newordersdf = newordersdf.copy().append(bomdf.copy())
+            newordersdf = newordersdf.copy().append(bomdf.copy(), sort=False)
         else:
             ordertype = 'Purchase'
 
@@ -273,7 +273,7 @@ def make_new_orders(shortordersdf, bomsdf, missingbomlist, manybomlist):
         for i in range(0, 8):
             tempdic[column_headers[i]] = [tempdatalist[i]]
         tempdf = pd.DataFrame.from_dict(tempdic)
-        newordersdf = newordersdf.copy().append(tempdf.copy())
+        newordersdf = newordersdf.copy().append(tempdf.copy(), sort=False)
         # print('newordersdf')
         # print(newordersdf)
     # print(newordersdf)
@@ -293,15 +293,15 @@ def create_phantom_order(bompart, qty, completiondate, bomsdf, missingbomlist, m
     for i in range(0, 8):
         tempdic[column_headers[i]] = [tempdatalist[i]]
     bompartdf = pd.DataFrame.from_dict(tempdic)
-    neworderdf = neworderdf.append(bompartdf)
+    neworderdf = neworderdf.append(bompartdf, sort=False)
     bompartdf['DATESCHEDULED'] = bompartdf['DATESCHEDULED'] + dt.timedelta(days=1)
     bomdf = bom.order_exploder_new_order(bomsdf, bompartdf, missingbomlist, manybomlist)
-    neworderdf = neworderdf.append(bomdf)
+    neworderdf = neworderdf.append(bomdf, sort=False)
     return neworderdf
 
 """Add what if order to timeline"""
 def add_phantom_order(phantomdf, timeline):
-    workingtimeline = timeline.append(phantomdf)
+    workingtimeline = timeline.append(phantomdf, sort=False)
     return workingtimeline
 
 """Checks ending inventory to see about timing issues."""
@@ -324,7 +324,7 @@ def find_demand_driver(timeline):
     # print(phantomtimelineP)
     phantomtimelineI = timeline.ix[timeline['ITEM'] == 'Imaginary']  # Grabs Imaginary lines
     # print(phantomtimelineI)
-    phantomtimeline = phantomtimelineP.copy().append(phantomtimelineI.copy())  # and combines 'em
+    phantomtimeline = phantomtimelineP.copy().append(phantomtimelineI.copy(), sort=False)  # and combines 'em
     for index, row in phantomtimeline.iterrows():  # Iterates through all phantom and imaginary order lines
         if row['ORDERTYPE'] == 'Purchase':
             parentTemp = timeline.ix[timeline['ORDER'] == row['PARENT']].copy()
@@ -520,11 +520,11 @@ def add_inv_counter(inputTimeline, backdate, invdf):
         currentPartOrders = partlist[partlist['PART'] == currentPart].copy()  # make a dataFrame of orders with just the current part
         tempdf = pd.DataFrame(columns=colHeaders, index=[0])  # make a temporary dataFrame with one empty line and use the column headers
         tempdf[['ORDERTYPE', 'PART', 'DATESCHEDULED']] = [orderType, currentPart, backdate]  # make this line the starting inventory line
-        tempdf = tempdf.append(currentPartOrders, ignore_index=True)  # append the current part's orders to the starting line
+        tempdf = tempdf.append(currentPartOrders, ignore_index=True, sort=False)  # append the current part's orders to the starting line
         tempdf.set_value(index=0, col='INV', value= tempdf['INV'].iloc[1])  # this references the inventory on the other columns to set the starting inventory
         ind = 1  # This is going to iterate through the index or rows
         while ind < len(tempdf):  # while this indexer is less than the length
             tempdf.set_value(ind, 'INV', (tempdf['INV'].iloc[ind-1] + tempdf['QTYREMAINING'].iloc[ind]))  # set the next inventory value by adding the order amount to the previous inventory value
             ind += 1  # step up the indexer
-        resultdf = resultdf.append(tempdf.copy(), ignore_index=True)  # store this as a result
+        resultdf = resultdf.append(tempdf.copy(), ignore_index=True, sort=False)  # store this as a result
     return resultdf  # results are the new demand dataFrame

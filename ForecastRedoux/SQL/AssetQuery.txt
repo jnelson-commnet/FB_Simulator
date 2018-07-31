@@ -1,0 +1,8 @@
+SELECT part.num as "PART",
+        assetthing.info as "ASSET"
+
+FROM part
+       join (select * 
+                  from customset 
+                  where customset.customfieldid = 71)
+            as assetthing on assetthing.recordid = part.id

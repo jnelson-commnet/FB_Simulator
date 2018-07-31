@@ -21,10 +21,10 @@ def gather_orders():
     orgdf = ftlb.create_mo_parents(modf)
     popath = os.path.join(rawDataPath, 'POs.xlsx')
     tempdf = pd.read_excel(popath, header=0) #Opens and puts the data into a dataframe
-    orgdf = orgdf.append(tempdf.copy()) #Append all the data into one dataframe
+    orgdf = orgdf.append(tempdf.copy(), sort=False) #Append all the data into one dataframe
     sopath = os.path.join(rawDataPath, 'SOs.xlsx')
     tempdf = pd.read_excel(sopath, header=0) #Opens and puts the data into a dataframe
-    orgdf = orgdf.append(tempdf.copy()) #Append all the data into one dataframe
+    orgdf = orgdf.append(tempdf.copy(), sort=False) #Append all the data into one dataframe
     orgdf = orgdf.sort_values(by=['PART', 'DATESCHEDULED'], ascending=[True, False]) #Sort the data by part then date
     return orgdf
 
@@ -47,16 +47,30 @@ def gather_inventory():
     uomid 2 is 'ft'
     uomid 7 is 'in' """
 def fix_uom(orgdf):
+    orgdf.reset_index(drop=True, inplace=True)
     uomIssues = orgdf[orgdf['BOMUOM'] != orgdf['PARTUOM']].copy()
-    for index, row in uomIssues.iterrows():
-        if (row['BOMUOM'] == 1 and row['PARTUOM'] == 2): # if BOM is 'ea' and part is 'ft' then multiply by 2
-            orgdf.set_value(index, 'QTY', (row['QTY'] * 2))
-        elif (row['BOMUOM'] == 2 and row['PARTUOM'] == 1): # if BOM is 'ft' and part is 'ea' then divide by 2
-            orgdf.set_value(index, 'QTY', (row['QTY'] / 2))
-        elif (row['BOMUOM'] == 2 and row['PARTUOM'] == 7): # if BOM is 'ft' and part is 'in' then multiply by 12
-            orgdf.set_value(index, 'QTY', (row['QTY'] * 12))
-        elif (row['BOMUOM'] == 7 and row['PARTUOM'] == 2): # if BOM is 'in' and part is 'ft' then divide by 12
-            orgdf.set_value(index, 'QTY', (row['QTY'] / 12))
+    # for index, row in uomIssues.iterrows():
+    #     if (row['BOMUOM'] == 1 and row['PARTUOM'] == 2): # if BOM is 'ea' and part is 'ft' then multiply by 2
+    #         orgdf.set_value(index, 'QTY', (row['QTY'] * 2))
+    #     elif (row['BOMUOM'] == 2 and row['PARTUOM'] == 1): # if BOM is 'ft' and part is 'ea' then divide by 2
+    #         orgdf.set_value(index, 'QTY', (row['QTY'] / 2))
+    #     elif (row['BOMUOM'] == 2 and row['PARTUOM'] == 7): # if BOM is 'ft' and part is 'in' then multiply by 12
+    #         orgdf.set_value(index, 'QTY', (row['QTY'] * 12))
+    #     elif (row['BOMUOM'] == 7 and row['PARTUOM'] == 2): # if BOM is 'in' and part is 'ft' then divide by 12
+    #         orgdf.set_value(index, 'QTY', (row['QTY'] / 12))
+    for index in uomIssues.index:
+        # if BOM is 'ea' and part is 'ft' then multiply by 2
+        if (uomIssues['BOMUOM'].at[index] == 1 and uomIssues['PARTUOM'].at[index] == 2):
+            orgdf['QTY'].at[index] = orgdf['QTY'].at[index] * 2
+        # if BOM is 'ft' and part is 'ea' then divide by 2
+        elif (uomIssues['BOMUOM'].at[index] == 2 and uomIssues['PARTUOM'].at[index] == 1):
+            orgdf['QTY'].at[index] = orgdf['QTY'].at[index] / 2
+        # if BOM is 'ft' and part is 'in' then multiply by 12
+        elif (uomIssues['BOMUOM'].at[index] == 2 and uomIssues['PARTUOM'].at[index] == 7):
+            orgdf['QTY'].at[index] = orgdf['QTY'].at[index] * 12
+        # if BOM is 'in' and part is 'ft' then divide by 12
+        elif (uomIssues['BOMUOM'].at[index] == 7 and uomIssues['PARTUOM'].at[index] == 2):
+            orgdf['QTY'].at[index] = orgdf['QTY'].at[index] / 12
     return(orgdf.copy())
 
 """Pull the BOM data"""
@@ -82,7 +96,7 @@ def add_make_buy(orgdf, mbdf):
 
 """Adds new orders to original orders"""
 def add_new_orders(ordersdf, newordersdf):
-    allordersdf = ordersdf.append(newordersdf) #Add the new orders created from shortages
+    allordersdf = ordersdf.append(newordersdf, sort=False) #Add the new orders created from shortages
     allordersdf.reset_index(drop=True, inplace=True)
     # print(allordersdf)
     return allordersdf.copy()
@@ -108,7 +122,7 @@ def bandaid_schedule_issues(ordersdf):
     today = dt.datetime.now()  # grab today's date
     yesteryear = today + dt.timedelta(days=-2000)  # bump it back a few years
     past['DATESCHEDULED'] = yesteryear.strftime('%Y-%m-%d %H:%M:%S')  # copy it into the positive inv changes
-    ordersdf = past.copy().append(future.copy())  # append all inv changes back together (will have dropped anything equal to 0)
+    ordersdf = past.copy().append(future.copy(), sort=False)  # append all inv changes back together (will have dropped anything equal to 0)
     ordersdf.sort_values(by=['PART', 'DATESCHEDULED'], ascending=[True, False], inplace=True)  # sort it
     return ordersdf
 
@@ -132,21 +146,21 @@ def complete_orders_loop_redux(partlist, ordersdf, invdf, bomsdf, missingboms, m
     # postordersdf = shortorderslist[1]
     # preordersdf = shortorderslist[2]
     # invdf = shortorderslist[3]
-    finalordersdf = finalordersdf.copy().append(shortorderslist[2].copy()) #Append the orders covered by inventory
+    finalordersdf = finalordersdf.copy().append(shortorderslist[2].copy(), sort=False) #Append the orders covered by inventory
     neworders = ftlb.make_new_orders(shortorderslist[0].copy(), bomsdf.copy(), missingboms, manyboms) #Make phantom orders to make up for the shortages
     shortorderslist[1] = add_new_orders(shortorderslist[1].copy(), neworders.copy()) #Append the phantom orders to the orders timeline
     # print(shortorderslist[1])
     while shortorderslist[1].empty == False: #Run this loop until there are no more orders left to parse through
         # print(shortorderslist[0])
         shortorderslist = ftlb.find_next_shortage_redux(shortorderslist[3], shortorderslist[1], partlist) #Finds shortages for every part
-        finalordersdf = finalordersdf.copy().append(shortorderslist[2].copy()) #Appends the covered orders to the final product
+        finalordersdf = finalordersdf.copy().append(shortorderslist[2].copy(), sort=False) #Appends the covered orders to the final product
         if shortorderslist[0].empty: #If there are no shortages break the loop
             break
         neworders = ftlb.make_new_orders(shortorderslist[0].copy(), bomsdf.copy(), missingboms, manyboms) #Make phantom orders from the shortages
         shortorderslist[1] = add_new_orders(shortorderslist[1].copy(), neworders.copy()) #Add the phantom orders to the orders timeline
         # print(shortorderslist[1])
     # print(shortorderslist[1])
-    ordersdf = ordersdf.copy().append(shortorderslist[1].copy()) # This S.O.B. took me a while to track down ... just added this so new orders pass to the next tier ... damn
+    ordersdf = ordersdf.copy().append(shortorderslist[1].copy(), sort=False) # This S.O.B. took me a while to track down ... just added this so new orders pass to the next tier ... damn
     finalordersdf = finalordersdf.sort_values(by=['PART', 'DATESCHEDULED'], ascending=[True, True])
     finalordersdf.reset_index(drop=True, inplace=True) #Finally sort and reindex the final product to return
     # print(ordersdf)
@@ -168,9 +182,13 @@ def stitch_builds_to_orders(newOrders, boms, missingboms, manyboms):
 
 """Run forecast with a tiered list of parts.  The tiered list helps prevent orders being attributed to the wrong "Grandparents".
    This pulls up to date info from Fishbowl, runs it, and saves it to an excel file."""
-def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=False, ignore_orders=False, sql_queries=True):
+def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=False, ignore_orders=False, sql_queries=True, alternate_queries=False):
     if sql_queries==True:
         sql = ForecastAPI.run_queries() #Runs the function in ForecastAPI that pulls data from Fishbowl
+        print(sql) #Prints Queries Successful!
+    elif alternate_queries==True:
+        print('Running alternate queries')
+        sql = ForecastAPI.run_alternate_queries() #Runs alternate queries
         print(sql) #Prints Queries Successful!
     else:
         print('!Not pulling fresh data from FB!')
@@ -232,7 +250,7 @@ def run_normal_forecast_tiers_v2(ignore_schedule_errors=False, add_stock_builds=
         print('Running tier', tier)
         tierlist = mytierlist[tier]
         normal_orders = complete_orders_loop_redux(tierlist, normal_orders[0], invdf, bomsdf, missingboms, manyboms)  # Runs the function that actually builds out the timeline
-        normal_orders[0] = normal_orders[0].append(normal_orders[2])
+        normal_orders[0] = normal_orders[0].append(normal_orders[2], sort=False)
         del mytierlist[tier]
         tier += 1
 
